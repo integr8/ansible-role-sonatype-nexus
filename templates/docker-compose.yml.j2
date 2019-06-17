@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  nexus:
+      image: "{{ nexus_docker_image }}"
+      networks:
+        - integr8
+      logging:
+        driver: gelf
+        options:
+          gelf-address: "udp://192.168.56.102:12201"
+      ports:
+        - 8081
+      volumes:
+        - nexus_data:/nexus-data
+      deploy:
+        labels:
+          - traefik.enable=true
+          - traefik.backend=nexus
+          - traefik.frontend.rule=Host:{{ nexus_host }}
+          - traefik.port=8081
+          - traefik.docker.network=integr8
+          - traefik.backend.healthcheck.path=/
+        replicas: 1
+        placement:
+          constraints:
+            - node.role == worker
+networks:
+  integr8:
+    external: true
+    name: integr8
+
+volumes:
+  nexus_data:
+      driver: local
